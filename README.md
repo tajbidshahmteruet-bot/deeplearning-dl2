@@ -8,7 +8,7 @@ Each model links **theory → code**: a derivation in `docs/` sits next to its i
 
 | Topic | What it covers | Key derivations | Status |
 |-------|----------------|-----------------|--------|
-| **Variational Autoencoders (VAEs)** | Latent-variable generative modeling, amortized inference | ELBO, reparameterization trick, Gaussian KL | 📋 Planned |
+| **Variational Autoencoders (VAEs)** | Latent-variable generative modeling, amortized inference | ELBO, reparameterization trick, Gaussian KL | ✅ Done |
 | **Generative Adversarial Networks (GANs)** | Adversarial training, min–max games | Optimal discriminator → JS divergence, Wasserstein distance | 📋 Planned |
 | **Flow-Based Models** | Exact likelihood via invertible maps | Change of variables, triangular Jacobians, coupling layers (RealNVP) | 📋 Planned |
 | **Autoregressive Models** | Sequential factorization of the joint distribution | Chain rule of probability, masked/causal attention | 📋 Planned |
@@ -40,6 +40,22 @@ Each model is runnable as a module, e.g.:
 ```bash
 python -m src.models.vae --epochs 20
 ```
+## Results
+
+### VAE on MNIST
+A variational autoencoder with a 2-dimensional latent space, trained on MNIST.
+See [`docs/vae_elbo.md`](docs/vae_elbo.md) for the full theory-to-code derivation.
+
+**Latent space manifold** — decoding a grid across the 2D latent plane shows a
+smooth, continuous space where digits morph into one another:
+
+![Latent manifold](assets/latent_manifold.png)
+
+**Reconstructions** (top: original, bottom: reconstructed):
+![Reconstructions](assets/reconstructions.png)
+
+**Generated samples** — novel digits decoded from random $z \sim \mathcal{N}(0, I)$:
+![Generated samples](assets/samples.png)
 
 ## Motivation
 
