@@ -58,3 +58,33 @@ $\log \sigma^2 \in \mathbb{R}$, we recover a guaranteed-positive
 $\sigma = \exp(\tfrac{1}{2}\log\sigma^2)$ later. This is a numerical
 stability trick — it avoids ever forcing a raw layer output to stay
 positive.
+
+## 4. The Reparameterization Trick
+
+To evaluate the reconstruction term we must sample $z \sim q(z|x)$. But
+**sampling is not differentiable** — if $z$ comes straight from a random
+number generator, gradients cannot flow back through it to the encoder,
+breaking end-to-end training.
+
+The trick rewrites the sample as a deterministic function of the
+parameters plus external, parameter-free noise:
+
+$$z = \mu + \sigma \odot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, I)$$
+
+```python
+def reparameterize(self, mu, logvar):
+    std = torch.exp(0.5 * logvar)
+    eps = torch.randn_like(std)
+    return mu + eps * std
+```
+Now the randomness lives in $\epsilon$, whose distribution does **not**
+depend on $\mu$ or $\sigma$. So $z$ is an ordinary arithmetic function of
+$\mu$ and $\sigma$ (with $\epsilon$ a fixed sampled constant), and the
+gradients $\partial z / \partial \mu = 1$ and
+$\partial z / \partial \sigma = \epsilon$ flow cleanly into the encoder.
+
+**Key idea:** express the sample as a *deterministic, differentiable
+transform of a parameter-free noise source*. The single stochastic line
+is `torch.randn_like(std)` — and it draws from a fixed $\mathcal{N}(0, I)$,
+independent of any weight.
+
