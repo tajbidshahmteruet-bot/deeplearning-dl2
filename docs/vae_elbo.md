@@ -88,3 +88,38 @@ transform of a parameter-free noise source*. The single stochastic line
 is `torch.randn_like(std)` — and it draws from a fixed $\mathcal{N}(0, I)$,
 independent of any weight.
 
+## 5. The KL Divergence (Closed Form)
+
+For two Gaussians — the encoder $q(z|x) = \mathcal{N}(\mu, \sigma^2)$ and
+the prior $p(z) = \mathcal{N}(0, I)$ — the KL divergence has a closed form.
+For a single latent dimension $j$:
+
+$$D_{KL} = \frac{1}{2}\left(\sigma_j^2 + \mu_j^2 - 1 - \log\sigma_j^2\right)$$
+
+Summing over all $J$ latent dimensions and rearranging the sign gives the
+form used in code:
+
+$$D_{KL}(q \parallel p) = -\frac{1}{2}\sum_{j=1}^{J}\left(1 + \log\sigma_j^2 - \mu_j^2 - \sigma_j^2\right)$$
+
+```python
+kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+```
+
+Term-by-term, the code **is** the formula:
+
+| Math | Code | Note |
+|------|------|------|
+| $-\tfrac{1}{2}$ | `-0.5 *` | prefactor |
+| $\sum$ | `torch.sum` | over latent dims (and batch) |
+| $\log\sigma_j^2$ | `logvar` | stored directly as log-variance |
+| $\mu_j^2$ | `mu.pow(2)` | |
+| $\sigma_j^2$ | `logvar.exp()` | $\exp(\log\sigma^2) = \sigma^2$ |
+
+**Sanity check:** $D_{KL} \geq 0$ always (it is a divergence). If your
+computed KL is ever negative, there is a sign error. This invariant is
+worth remembering for exams too.
+
+**Common trap:** the $\sigma^2$ term is the *variance*, i.e.
+`logvar.exp()` — not a raw output and not a standard deviation. Confusing
+$\sigma^2$ with $\sigma$ (or with $\mathbb{E}[zz^\top]$ in the
+moment-matching form) is a frequent mistake.
