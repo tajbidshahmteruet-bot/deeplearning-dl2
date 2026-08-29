@@ -7,6 +7,6 @@ This document links the mathematics of the Variational Autoencoder to its implem
 
 We want a generative model that maximizes the likelihood of the data:
 
-$$\log p(x) = \log \int p(x|z)\,p(z)\,dz$$
+$$\log p(x) = \log \int p(x \mid z) \, p(z) \, dz$$
 
 This integral is **intractable** - we cannot marginalize over all possible latent codes 'z'. The VAE sidesteps this by introducing an approximate posterior 'q(z|x)' (the encoder) and optimizing a tractable *lower bound* on 'log p(x)' instead: the Evidence Lower Bound (ELBO). 
