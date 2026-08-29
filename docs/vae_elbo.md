@@ -123,3 +123,47 @@ worth remembering for exams too.
 `logvar.exp()` — not a raw output and not a standard deviation. Confusing
 $\sigma^2$ with $\sigma$ (or with $\mathbb{E}[zz^\top]$ in the
 moment-matching form) is a frequent mistake.
+
+## 6. The Decoder and Reconstruction Term
+
+The decoder $p(x|z)$ maps a latent code back to image space, mirroring the
+encoder ($2 \to 400 \to 784$):
+
+```python
+def decode(self, z):
+    h = F.relu(self.fc3(z))
+    return torch.sigmoid(self.fc4(h))
+```
+
+The final **sigmoid** squashes each of the 784 outputs into $[0, 1]$,
+making it a per-pixel **Bernoulli** probability — "how likely is this
+pixel to be on."
+
+This choice dictates the reconstruction loss and the data preprocessing:
+
+- **Loss:** binary cross-entropy, the negative log-likelihood of a
+  Bernoulli. It compares each predicted pixel probability against the
+  target.
+
+```python
+  recon_loss = F.binary_cross_entropy(x_recon, x, reduction="sum")
+```
+
+- **Data:** pixels must lie in $[0, 1]$ for BCE to be valid — which is why
+  the loader uses only `transforms.ToTensor()` (scales to $[0,1]$) and
+  **not** the mean-zero `Normalize` used for classifiers.
+
+The decoder's output distribution therefore determines everything
+upstream: the sigmoid, the BCE loss, and the $[0,1]$ preprocessing are one
+coherent set of choices.
+
+## Summary
+
+| Component | Theory | Code |
+|-----------|--------|------|
+| Encoder | $q(z\|x) = \mathcal{N}(\mu, \sigma^2)$ | `encode` |
+| Sampling | $z = \mu + \sigma \odot \epsilon$ | `reparameterize` |
+| Decoder | $p(x\|z)$, Bernoulli | `decode` |
+| Reconstruction | $\mathbb{E}_q[\log p(x\|z)]$ | BCE loss |
+| Regularizer | $D_{KL}(q \parallel p)$ | closed-form KL |
+| Objective | maximize ELBO | minimize `recon + KL` |
